@@ -95,3 +95,7 @@ Reglas clave implementadas:
 Captura del correo recibido en Mailtrap:
 
 ![Captura del correo en Mailtrap](docs/captures/mailtrap-inbox.png)
+
+Colección Postman para pruebas manuales:
+
+- `docs/postman/Laravel-Invite-Manager.postman_collection.json`
