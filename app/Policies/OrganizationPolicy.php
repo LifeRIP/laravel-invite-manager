@@ -76,4 +76,12 @@ class OrganizationPolicy
     {
         return $user->isAdminInOrganization($organization->id);
     }
+
+    public function deactivateMembers(User $user, Organization $organization): bool
+    {
+        return $user->hasAnyRoleInOrganization($organization->id, [
+            OrganizationRole::ADMIN->value,
+            OrganizationRole::MANAGER->value,
+        ]);
+    }
 }

@@ -24,13 +24,14 @@ class User extends Authenticatable
     public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_members')
-            ->withPivot(['role', 'invited_by_user_id', 'joined_at'])
+            ->wherePivotNull('deactivated_at')
+            ->withPivot(['role', 'invited_by_user_id', 'joined_at', 'deactivated_at', 'deactivated_by_user_id'])
             ->withTimestamps();
     }
 
     public function memberships(): HasMany
     {
-        return $this->hasMany(OrganizationMember::class);
+        return $this->hasMany(OrganizationMember::class)->whereNull('deactivated_at');
     }
 
     public function sentInvitations(): HasMany

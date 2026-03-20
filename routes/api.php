@@ -19,7 +19,11 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('organizations', OrganizationController::class);
 
         Route::get('/organizations/{organization}/members', [OrganizationController::class, 'members']);
-        Route::delete('/organizations/{organization}/members/{user}', [OrganizationController::class, 'removeMember']);
+        Route::delete('/organizations/{organization}/members/{email}', [OrganizationController::class, 'removeMemberByEmail']);
+        Route::patch('/organizations/{organization}/members/role', [OrganizationController::class, 'changeMemberRoleByEmail']);
+        Route::patch('/organizations/{organization}/members/deactivate', [OrganizationController::class, 'deactivateMemberByEmail']);
+
+        Route::get('/organizations/{organization}/invitations', [InvitationController::class, 'indexByOrganization']);
         Route::post('/organizations/{organization}/invitations', [InvitationController::class, 'store']);
     });
 });

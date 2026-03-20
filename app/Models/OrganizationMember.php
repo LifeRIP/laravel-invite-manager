@@ -7,7 +7,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['organization_id', 'user_id', 'invited_by_user_id', 'role', 'joined_at'])]
+#[Fillable([
+    'organization_id',
+    'user_id',
+    'invited_by_user_id',
+    'role',
+    'joined_at',
+    'deactivated_at',
+    'deactivated_by_user_id',
+])]
 class OrganizationMember extends Model
 {
     use HasFactory;
@@ -16,6 +24,7 @@ class OrganizationMember extends Model
     {
         return [
             'joined_at' => 'datetime',
+            'deactivated_at' => 'datetime',
         ];
     }
 
@@ -32,5 +41,10 @@ class OrganizationMember extends Model
     public function invitedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by_user_id');
+    }
+
+    public function deactivatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deactivated_by_user_id');
     }
 }

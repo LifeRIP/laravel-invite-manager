@@ -116,9 +116,17 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function removeMember(Organization $organization, User $user)
+    public function removeMemberByEmail(Organization $organization, string $email)
     {
         $this->authorize('manageMembers', $organization);
+
+        $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'User not found.',
+            ], 404);
+        }
 
         if ($user->id === request()->user()->id) {
             return response()->json([
@@ -132,5 +140,92 @@ class OrganizationController extends Controller
             ->delete();
 
         return response()->noContent();
+    }
+
+    public function changeMemberRoleByEmail(Request $request, Organization $organization)
+    {
+        $this->authorize('manageMembers', $organization);
+
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+            'role' => ['required', 'in:member,admin,manager'],
+        ]);
+
+        $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower($validated['email'])])->first();
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'User not found.',
+            ], 404);
+        }
+
+        $membership = OrganizationMember::query()
+            ->where('organization_id', $organization->id)
+            ->where('user_id', $user->id)
+            ->whereNull('deactivated_at')
+            ->first();
+
+        if (! $membership) {
+            return response()->json([
+                'message' => 'The user is not an active member of this organization.',
+            ], 422);
+        }
+
+        $membership->update([
+            'role' => $validated['role'],
+        ]);
+
+        return response()->json([
+            'message' => 'Role updated successfully.',
+            'data' => [
+                'organization_id' => $organization->id,
+                'email' => $user->email,
+                'role' => $membership->role,
+            ],
+        ]);
+    }
+
+    public function deactivateMemberByEmail(Request $request, Organization $organization)
+    {
+        $this->authorize('deactivateMembers', $organization);
+
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $user = User::query()->whereRaw('LOWER(email) = ?', [strtolower($validated['email'])])->first();
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'User not found.',
+            ], 404);
+        }
+
+        if ($user->id === $request->user()->id) {
+            return response()->json([
+                'message' => 'You cannot deactivate yourself from organization members.',
+            ], 422);
+        }
+
+        $membership = OrganizationMember::query()
+            ->where('organization_id', $organization->id)
+            ->where('user_id', $user->id)
+            ->whereNull('deactivated_at')
+            ->first();
+
+        if (! $membership) {
+            return response()->json([
+                'message' => 'The user is not an active member of this organization.',
+            ], 422);
+        }
+
+        $membership->update([
+            'deactivated_at' => now(),
+            'deactivated_by_user_id' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Member deactivated successfully.',
+        ]);
     }
 }

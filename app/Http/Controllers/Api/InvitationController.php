@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\InvitationStatus;
+use App\Enums\OrganizationRole;
 use App\Http\Requests\AcceptInvitationRequest;
 use App\Http\Requests\StoreInvitationRequest;
 use App\Http\Resources\InvitationResource;
@@ -19,12 +20,52 @@ use Illuminate\Support\Str;
 
 class InvitationController extends Controller
 {
+    public function indexByOrganization(Organization $organization)
+    {
+        $this->authorize('createInvitation', $organization);
+
+        $invitations = Invitation::query()
+            ->where('organization_id', $organization->id)
+            ->with(['organization:id,name,slug', 'inviter:id,name,email'])
+            ->latest()
+            ->get();
+
+        return InvitationResource::collection($invitations);
+    }
+
     public function store(StoreInvitationRequest $request, Organization $organization): JsonResponse
     {
         $this->authorize('createInvitation', $organization);
 
         $validated = $request->validated();
         $email = strtolower($validated['email']);
+        $inviter = $request->user();
+
+        if (
+            $inviter->hasAnyRoleInOrganization($organization->id, [OrganizationRole::MANAGER->value])
+            && $validated['role'] !== OrganizationRole::MEMBER->value
+        ) {
+            return response()->json([
+                'message' => 'Managers can only invite users with the member role.',
+            ], 422);
+        }
+
+        $existingUser = User::query()->where('email', $email)->first();
+
+        if ($existingUser) {
+            $alreadyMemberWithSameRole = OrganizationMember::query()
+                ->where('organization_id', $organization->id)
+                ->where('user_id', $existingUser->id)
+                ->where('role', $validated['role'])
+                ->whereNull('deactivated_at')
+                ->exists();
+
+            if ($alreadyMemberWithSameRole) {
+                return response()->json([
+                    'message' => 'This user already belongs to the organization with the same role.',
+                ], 422);
+            }
+        }
 
         Invitation::query()
             ->where('organization_id', $organization->id)
@@ -136,6 +177,8 @@ class InvitationController extends Controller
                 'invited_by_user_id' => $invitation->inviter_user_id,
                 'role' => $invitation->role,
                 'joined_at' => now(),
+                'deactivated_at' => null,
+                'deactivated_by_user_id' => null,
             ]
         );
 
