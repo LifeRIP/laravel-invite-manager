@@ -1,27 +1,38 @@
 # Laravel Invite Manager API
 
+## Requisitos
+
+- Docker
+
 ## Puesta en marcha
 
-1. Levantar contenedores:
+1. Instalar dependencias PHP con Composer (primero):
+
+```bash
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/var/www/html" -w /var/www/html laravelsail/php84-composer:latest composer install --ignore-platform-reqs
+```
+
+2. Levantar contenedores:
 
 ```bash
 ./vendor/bin/sail up -d
 ```
 
-2. Preparar entorno:
+3. Preparar entorno:
 
 ```bash
 cp .env.example .env
+# Actualizar credenciales de email en .env (Mailtrap)
 ./vendor/bin/sail artisan key:generate
 ```
 
-3. Migrar y seedear:
+4. Migrar y seedear:
 
 ```bash
 ./vendor/bin/sail artisan migrate:fresh --seed
 ```
 
-4. Ejecutar tests:
+5. Ejecutar tests:
 
 ```bash
 ./vendor/bin/sail artisan test
@@ -30,7 +41,6 @@ cp .env.example .env
 Notas:
 
 - Mailtrap se usa con credenciales en `.env`.
-- Se retiraron servicios no usados del `compose.yaml`: `redis`, `meilisearch`, `mailpit`, `selenium`.
 
 Usuarios demo del seeder:
 
