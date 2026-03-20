@@ -50,7 +50,7 @@ Usuarios demo del seeder:
 
 ## Endpoints
 
-Base URL: `http://localhost/api/v1`
+Base URL: `http://127.0.0.1/api/v1`
 
 Auth:
 
@@ -106,6 +106,6 @@ Captura del correo recibido en Mailtrap:
 
 ![Captura del correo en Mailtrap](docs/captures/mailtrap-inbox.png)
 
-Colección Postman para pruebas manuales:
+## Colección Postman para pruebas manuales:
 
 - `docs/postman/Laravel-Invite-Manager.postman_collection.json`
